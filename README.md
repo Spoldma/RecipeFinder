@@ -7,8 +7,13 @@
 
 ## File description
 RecipeFinder_Tamm&Põldma.ipynb - Insight into our dev process
+
 Report.pdf - Report about this project
+
 best.pt - Our trained detection model weights
+
 edited_recipes.csv - Holds recipes that are chosen based on detected ingredients
+
 main.py - Program file
+
 recipes.csv - All the recipe data
