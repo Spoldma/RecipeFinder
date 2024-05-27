@@ -33,7 +33,7 @@ def predict(filepath):
         if os.path.exists("runs/detect/predict"): shutil.rmtree("runs/detect/predict")
         model = YOLO("best.pt")
         results = model(filepath, save_txt=True)
-    # We expect everyone to have oil salt sugar at home
+    # We expect everyone to have oil salt sugar black pepper water at home
     everyone_has = ['oil', 'salt', 'sugar', 'black pepper', 'water']
     detected_classes = read_detections(filename)
     detected_ingredients['text'] = 'Our model detected:\n' + str(set(detected_classes))
