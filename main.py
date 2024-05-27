@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 import webbrowser
+import os
 # import onnxruntime as rt
 import pip
 from ultralytics import YOLO
@@ -23,17 +24,18 @@ def callback(url):
 
 
 def predict(filepath):
-    ingredient_dict = pd.read_pickle('ingr_map.pkl')
-    model = YOLO("best.pt")
-    results = model(filepath, save_txt=True)
-    print(results)
     filename = filepath.split("/")[-1].split(".")[0]
     print(filename)
+    if not os.path.exists("runs/detect/predict/labels/" + filename + ".txt"):
+        model = YOLO("best.pt")
+        results = model(filepath, save_txt=True, )
+        print(results)
     # We expect everyone to have oil salt sugar at home
     everyone_has = ['oil', 'salt', 'sugar']
-    detected_classes = read_detections(filename)  # .extend(everyone_has)
+    ingredient_dict = pd.read_pickle('ingr_map.pkl')
+    detected_classes = set(read_detections(filename)) # .extend(everyone_has)
     print(detected_classes)
-    find_recipe(set(detected_classes), ingredient_dict)
+    find_recipe(detected_classes, ingredient_dict)
     display_found_recipes(ingredient_dict)
 
 
