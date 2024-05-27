@@ -2,12 +2,10 @@ import tkinter as tk
 from tkinter import filedialog
 import webbrowser
 import os
-# import onnxruntime as rt
-import pip
 from ultralytics import YOLO
 import pandas as pd
 from tkinter import ttk
-import urllib
+import ast
 
 class_dict = {0: 'apple', 1: 'chicken', 2: 'egg', 3: 'garlic', 4: 'ginger', 5: 'lemon', 6: 'lettuce', 7: 'onion',
               8: 'pepper', 9: 'potato', 10: 'tomato'}
@@ -16,6 +14,9 @@ class_dict = {0: 'apple', 1: 'chicken', 2: 'egg', 3: 'garlic', 4: 'ginger', 5: '
 def UploadAction(event=None):
     filepath = filedialog.askopenfilename()
     print('Selected:', filepath)
+    tree.delete(*tree.get_children())
+    error_text['text'] = ''
+    info['text'] = ''
     predict(filepath)
 
 
@@ -31,22 +32,26 @@ def predict(filepath):
         results = model(filepath, save_txt=True, )
         print(results)
     # We expect everyone to have oil salt sugar at home
-    everyone_has = ['oil', 'salt', 'sugar']
-    ingredient_dict = pd.read_pickle('ingr_map.pkl')
-    detected_classes = set(read_detections(filename)) # .extend(everyone_has)
-    print(detected_classes)
-    find_recipe(detected_classes, ingredient_dict)
-    display_found_recipes(ingredient_dict)
+    everyone_has = ['oil', 'salt', 'sugar', 'black pepper', 'water']
+    detected_classes = read_detections(filename)
+    print("Detected these ingredients on picture: " + str(detected_classes))
+    available_ingredients = set(detected_classes + everyone_has)
+    find_recipe(available_ingredients)
+    display_found_recipes()
 
 
 def read_detections(filename):
-    with open("runs/detect/predict/labels/" + filename + ".txt", 'r') as file:
-        lines = file.readlines()
-    detected_classes = [line.split()[0] for line in lines]
-    for i in range(len(detected_classes)):
-        ind = detected_classes[i]
-        detected_classes[i] = class_dict[int(ind)]
-    return detected_classes
+    detected_classes = []
+    try:
+        with open("runs/detect/predict/labels/" + filename + ".txt", 'r') as file:
+            lines = file.readlines()
+        detected_classes = [line.split()[0] for line in lines]
+        for i in range(len(detected_classes)):
+            ind = detected_classes[i]
+            detected_classes[i] = class_dict[int(ind)]
+        return detected_classes
+    except FileNotFoundError:
+        return detected_classes
 
 
 def is_subset_general(main_set, subset, percent):
@@ -58,14 +63,17 @@ def is_subset_general(main_set, subset, percent):
             for main_element in main_set:
                 if element in main_element or main_element in element:
                     count += 1
+                    break
     if count / len(subset) >= percent:
         return True
     return False
 
 
-def find_recipe(target_ingredients, ingredient_dict):
+def find_recipe(target_ingredients):
     data = pd.read_csv('recipes.csv')
+    print(data.shape)
     recipe_df = pd.DataFrame(data)
+    recipe_df['ingredients'] = recipe_df['ingredients'].apply(ast.literal_eval)
 
     # Initialize a list to store the selected rows
     selected_rows = []
@@ -74,25 +82,19 @@ def find_recipe(target_ingredients, ingredient_dict):
     for index, row in recipe_df.iterrows():
         ingredient_set = set(row.ingredients)
 
-        if is_subset_general(target_ingredients, ingredient_set, 0.5):
+        if is_subset_general(target_ingredients, ingredient_set, 0.85):
             selected_rows.append(row)
 
     found_recipes_df = pd.DataFrame(selected_rows)
     found_recipes_df.to_csv('edited_recipes.csv', index=False)
 
 
-def display_found_recipes(ingredient_dict):
-    data = pd.read_csv('edited_recipes.csv')
-    recipe_df = pd.DataFrame(data)
-    if recipe_df.empty:
-        not_found = tk.Label(root,
-                             text="We did not find any recipes for your ingredients. Try with a different picture.",
-                             font=('helvetica now', 12, 'bold'),
-                             background=backcolor)
-        not_found.pack()
-    else:
-        info = tk.Label(root, text="Click on a link to see recipe.", font=('helvetica now', 12, 'bold'), background=backcolor)
-        info.pack()
+def display_found_recipes():
+    try:
+        info['text'] = 'Click on a link to see recipe.'
+        data = pd.read_csv('edited_recipes.csv')
+        print(data.shape)
+        recipe_df = pd.DataFrame(data)
         # Define the headings
         tree.heading("recipe_name", text="Recipe Name")
         tree.heading("recipe_link", text="Recipe Link")
@@ -113,6 +115,8 @@ def display_found_recipes(ingredient_dict):
         tree.bind("<Button-1>", click)
 
         tree.pack(fill=tk.BOTH, expand=True)
+    except pd.errors.EmptyDataError:
+        error_text['text'] = "We did not find any recipes for your ingredients.\nTry with a different picture."
 
 
 def click(event):
@@ -150,16 +154,15 @@ text2 = tk.Label(root, text="Simply upload a photo of your food ingredients, "
                  font=('helvetica now', 12), wraplength=360, background=backcolor)
 text2.pack()
 
-# Add a link to YouTube with proper padding and alignment
-# link_frame = tk.Frame(root)
-# link_frame.pack(pady=20)
-# link1 = tk.Label(link_frame, text="YouTube", fg="blue", cursor="hand2", font=('helvetica now', 14))
-# link1.pack()
-# link1.bind("<Button-1>", lambda e: callback("http://www.youtube.com"))
-
 # Add a button to upload files with some padding
 button = tk.Button(root, text='Upload File Here', command=UploadAction, font=('helvetica now', 14), padx=20, pady=10)
 button.pack(pady=20)
+
+error_text = tk.Label(root, text='', font=('helvetica now', 12, 'bold'), background=backcolor)
+error_text.pack()
+
+info = tk.Label(root, text="", font=('helvetica now', 12, 'bold'), background=backcolor)
+info.pack()
 
 # Run the main event loop
 root.mainloop()
