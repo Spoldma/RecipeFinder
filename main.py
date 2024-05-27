@@ -18,6 +18,7 @@ def UploadAction(event=None):
     tree.delete(*tree.get_children())
     error_text['text'] = ''
     info['text'] = ''
+    detected_ingredients['text'] = ''
     predict(filepath)
 
 
@@ -35,6 +36,7 @@ def predict(filepath):
     # We expect everyone to have oil salt sugar at home
     everyone_has = ['oil', 'salt', 'sugar', 'black pepper', 'water']
     detected_classes = read_detections(filename)
+    detected_ingredients['text'] = 'Our model detected:\n' + str(set(detected_classes))
     print("Detected these ingredients on picture: " + str(set(detected_classes)))
     available_ingredients = set(detected_classes + everyone_has)
     find_recipe(available_ingredients)
@@ -158,6 +160,9 @@ text2.pack()
 # Add a button to upload files with some padding
 button = tk.Button(root, text='Upload File Here', command=UploadAction, font=('helvetica now', 14), padx=20, pady=10)
 button.pack(pady=20)
+
+detected_ingredients = tk.Label(root, text="", font=('helvetica now', 12, 'bold'), background=backcolor)
+detected_ingredients.pack()
 
 error_text = tk.Label(root, text='', font=('helvetica now', 12, 'bold'), background=backcolor)
 error_text.pack()
