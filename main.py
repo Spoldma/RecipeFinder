@@ -6,6 +6,7 @@ from ultralytics import YOLO
 import pandas as pd
 from tkinter import ttk
 import ast
+import shutil
 
 class_dict = {0: 'apple', 1: 'chicken', 2: 'egg', 3: 'garlic', 4: 'ginger', 5: 'lemon', 6: 'lettuce', 7: 'onion',
               8: 'pepper', 9: 'potato', 10: 'tomato'}
@@ -28,13 +29,13 @@ def predict(filepath):
     filename = filepath.split("/")[-1].split(".")[0]
     print(filename)
     if not os.path.exists("runs/detect/predict/labels/" + filename + ".txt"):
+        if os.path.exists("runs/detect/predict"): shutil.rmtree("runs/detect/predict")
         model = YOLO("best.pt")
-        results = model(filepath, save_txt=True, )
-        print(results)
+        results = model(filepath, save_txt=True)
     # We expect everyone to have oil salt sugar at home
     everyone_has = ['oil', 'salt', 'sugar', 'black pepper', 'water']
     detected_classes = read_detections(filename)
-    print("Detected these ingredients on picture: " + str(detected_classes))
+    print("Detected these ingredients on picture: " + str(set(detected_classes)))
     available_ingredients = set(detected_classes + everyone_has)
     find_recipe(available_ingredients)
     display_found_recipes()
