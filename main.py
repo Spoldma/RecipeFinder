@@ -5,8 +5,12 @@ import webbrowser
 import pip
 from ultralytics import YOLO
 import pandas as pd
+from tkinter import ttk
+import urllib
 
-class_dict = {0: 'apple', 1: 'chicken', 2: 'egg', 3: 'garlic', 4: 'ginger', 5: 'lemon', 6: 'lettuce', 7: 'onion', 8: 'pepper', 9: 'potato', 10: 'tomato'}
+class_dict = {0: 'apple', 1: 'chicken', 2: 'egg', 3: 'garlic', 4: 'ginger', 5: 'lemon', 6: 'lettuce', 7: 'onion',
+              8: 'pepper', 9: 'potato', 10: 'tomato'}
+
 
 def UploadAction(event=None):
     filepath = filedialog.askopenfilename()
@@ -25,15 +29,16 @@ def predict(filepath):
     print(results)
     filename = filepath.split("/")[-1].split(".")[0]
     print(filename)
-    detected_classes = set(read_detections(filename))
+    # We expect everyone to have oil salt sugar at home
+    everyone_has = ['oil', 'salt', 'sugar']
+    detected_classes = read_detections(filename)  # .extend(everyone_has)
     print(detected_classes)
-    find_recipe(detected_classes, ingredient_dict)
+    find_recipe(set(detected_classes), ingredient_dict)
     display_found_recipes(ingredient_dict)
 
 
-
 def read_detections(filename):
-    with open("runs/detect/predict/labels/"+filename+".txt", 'r') as file:
+    with open("runs/detect/predict/labels/" + filename + ".txt", 'r') as file:
         lines = file.readlines()
     detected_classes = [line.split()[0] for line in lines]
     for i in range(len(detected_classes)):
@@ -51,7 +56,7 @@ def is_subset_general(main_set, subset, percent):
             for main_element in main_set:
                 if element in main_element or main_element in element:
                     count += 1
-    if count/len(subset) >= percent:
+    if count / len(subset) >= percent:
         return True
     return False
 
@@ -73,32 +78,45 @@ def find_recipe(target_ingredients, ingredient_dict):
     found_recipes_df = pd.DataFrame(selected_rows)
     found_recipes_df.to_csv('edited_recipes.csv', index=False)
 
+
 def display_found_recipes(ingredient_dict):
     data = pd.read_csv('edited_recipes.csv')
     recipe_df = pd.DataFrame(data)
     if recipe_df.empty:
-        not_found = tk.Label(root, text="We did not find any recipes for your ingredients. Try with a different picture.", font=('helvetica now', 12, 'bold'),
-                         background=backcolor)
+        not_found = tk.Label(root,
+                             text="We did not find any recipes for your ingredients. Try with a different picture.",
+                             font=('helvetica now', 12, 'bold'),
+                             background=backcolor)
         not_found.pack()
     else:
-        row_num = 0
-        headers = ['Name', 'ID', 'Link']
-        for col_num, header in enumerate(headers):
-            label = tk.Label(root, text=header, font=('bold', 12))
-            label.grid(row=0, column=col_num)
+        info = tk.Label(root, text="Click on a link to see recipe.", font=('helvetica now', 12, 'bold'), background=backcolor)
+        info.pack()
+        # Define the headings
+        tree.heading("recipe_name", text="Recipe Name")
+        tree.heading("recipe_link", text="Recipe Link")
+        tree.heading("recipe_ingredients", text="Recipe Ingredients")
+
+        # Define the column widths
+        tree.column("recipe_name", width=150)
+        tree.column("recipe_link", width=250)
+        tree.column("recipe_ingredients", width=300)
 
         for index, row in recipe_df.iterrows():
             recipe_name = row['name']
             recipe_id = row['id']
             recipe_ingredients = row['ingredients']
             recipe_link = "www.food.com/recipe/" + recipe_name.replace(" ", "-") + "-" + str(recipe_id)
-            tk.Label(root, text=row['name']).grid(row=row_num, column=0)
-            tk.Label(root, text=row['id']).grid(row=row_num, column=1)
+            tree.insert("", tk.END, values=(recipe_name, recipe_link, recipe_ingredients))
 
-            link_frame = tk.Frame(root)
-            link_frame.pack(pady=20)
-            tk.Label(link_frame, text="Link", fg="blue", cursor="hand2", font=('helvetica now', 14)).bind("<Button-1>", lambda e: callback(recipe_link)).grid(row=row_num, column=2)
-            row_num += 1
+        tree.bind("<Button-1>", click)
+
+        tree.pack(fill=tk.BOTH, expand=True)
+
+
+def click(event):
+    link = tree.item(tree.identify_row(event.y), "values")[1]
+    print('Opening link: '+link)
+    webbrowser.open(link, new=1)
 
 
 backcolor = 'pink'
@@ -107,6 +125,9 @@ root = tk.Tk()
 root.geometry("450x600")
 root.title("Recipe Finder")
 root.configure(background=backcolor)
+
+columns = ("recipe_name", "recipe_link", "recipe_ingredients")
+tree = ttk.Treeview(root, columns=columns, show="headings")
 
 # Add a heading label with some padding and styling
 heading = tk.Label(root, text="Recipe Finder", font=('helvetica now', 24, 'bold'), background=backcolor)
