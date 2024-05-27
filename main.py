@@ -78,10 +78,8 @@ def find_recipe(target_ingredients):
     recipe_df = pd.DataFrame(data)
     recipe_df['ingredients'] = recipe_df['ingredients'].apply(ast.literal_eval)
 
-    # Initialize a list to store the selected rows
     selected_rows = []
 
-    # Iterate through each row in the DataFrame
     for index, row in recipe_df.iterrows():
         ingredient_set = set(row.ingredients)
 
@@ -98,12 +96,11 @@ def display_found_recipes():
         data = pd.read_csv('edited_recipes.csv')
         print(data.shape)
         recipe_df = pd.DataFrame(data)
-        # Define the headings
+
         tree.heading("recipe_name", text="Recipe Name")
         tree.heading("recipe_link", text="Recipe Link")
         tree.heading("recipe_ingredients", text="Recipe Ingredients")
 
-        # Define the column widths
         tree.column("recipe_name", width=150)
         tree.column("recipe_link", width=250)
         tree.column("recipe_ingredients", width=300)
@@ -129,7 +126,7 @@ def click(event):
 
 
 backcolor = 'pink'
-# Create the main window
+
 root = tk.Tk()
 root.geometry("450x600")
 root.title("Recipe Finder")
@@ -138,26 +135,21 @@ root.configure(background=backcolor)
 columns = ("recipe_name", "recipe_link", "recipe_ingredients")
 tree = ttk.Treeview(root, columns=columns, show="headings")
 
-# Add a heading label with some padding and styling
 heading = tk.Label(root, text="Recipe Finder", font=('helvetica now', 24, 'bold'), background=backcolor)
 heading.pack()
 
-# Add names label
 names = tk.Label(root, text="Kristian Tamm & Sander Põldma", font=('helvetica now', 12), background=backcolor)
 names.pack()
 
-# Add description
 text1 = tk.Label(root, text="Welcome to our Recipe Finder!", font=('helvetica now', 12, 'bold'), background=backcolor)
 text1.pack(pady=(35, 0))
 
-# Create the Label inside the LabelFrame
 text2 = tk.Label(root, text="Simply upload a photo of your food ingredients, "
                             "and our AI will identify them and suggest delicious "
                             "recipes you can make with what you have at home.",
                  font=('helvetica now', 12), wraplength=360, background=backcolor)
 text2.pack()
 
-# Add a button to upload files with some padding
 button = tk.Button(root, text='Upload File Here', command=UploadAction, font=('helvetica now', 14), padx=20, pady=10)
 button.pack(pady=20)
 
@@ -170,5 +162,4 @@ error_text.pack()
 info = tk.Label(root, text="", font=('helvetica now', 12, 'bold'), background=backcolor)
 info.pack()
 
-# Run the main event loop
 root.mainloop()
