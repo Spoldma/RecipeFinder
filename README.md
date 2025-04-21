@@ -24,5 +24,5 @@ The project uses **object detection** to recognize ingredients from a photo you 
 
 ---
 
-Built by **Sander Põldma** and **Kristjan Tamm**  
+Built by **Sander Põldma** and **Kristian Tamm**  
 University of Tartu
